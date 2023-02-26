@@ -2,6 +2,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const DriverInfo = require("../models/driverInfo");
 const User = require("../models/user");
+const multer = require('multer')
 
 const router = express.Router();
 
@@ -37,7 +38,10 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
-router.post("/signup", async (req, res, next) => {
+
+const upload = multer({ storage: multer.memoryStorage() });
+
+router.post("/signup", upload.single('profilePic'), async (req, res, next) => {
   try {
     // Check if the email address is already registered
     const existingUser = await User.findOne({ email: req.body.email });
@@ -56,6 +60,11 @@ router.post("/signup", async (req, res, next) => {
       name: req.body.name,
       phoneNumber: req.body.phoneNumber,
     });
+    
+    if (req.file) {
+        user.profilePic.data = req.file.buffer;
+        user.profilePic.contentType = req.file.mimetype;
+    }
 
     // Hash the password
     const salt = await bcrypt.genSalt(10);
