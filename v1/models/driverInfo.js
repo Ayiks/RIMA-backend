@@ -7,7 +7,8 @@ const driverInfoSchema = new Schema({
         ref: 'User'
       },
     profilePic:{
-        type:String,
+        data:Buffer,
+        contentType: String
     },
     vehicleNumber:{
         type:String
