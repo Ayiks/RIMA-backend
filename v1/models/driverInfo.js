@@ -18,6 +18,19 @@ const driverInfoSchema = new Schema({
     },
     vehicleMake:{
         type:String
+    },
+    vehicleModel:{
+        type:String
+    },
+    insured:{
+        type:Boolean,
+        default: false
+    },
+    insuranceExpiryDate:{
+        type:Date
+    },
+    qrType:{
+        type:String
     }
 })
 
