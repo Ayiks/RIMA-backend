@@ -1,38 +1,29 @@
 const mongoose = require('mongoose');
-const{Schema, model} = mongoose;
+const {Schema, model} = mongoose;
 
 const driverInfoSchema = new Schema({
-    user: {
+    user:{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-      },
+        ref:'User'
+    },
     profilePic:{
         data:Buffer,
         contentType: String
     },
-    vehicleNumber:{
+    country:{
+        type:String,
+        default:'Ghana'
+    },
+    district:{
+        type:String,
+    },
+    emergencyContact:{
         type:String
     },
-    vehichleColor:{
-        type:String
-    },
-    vehicleMake:{
-        type:String
-    },
-    vehicleModel:{
-        type:String
-    },
-    insured:{
-        type:Boolean,
-        default: false
-    },
-    insuranceExpiryDate:{
-        type:Date
-    },
-    qrType:{
+    driverUnion:{
         type:String
     }
-})
+});
 
 const DriverInfo = model('DriverInfo', driverInfoSchema);
 
