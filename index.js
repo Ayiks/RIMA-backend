@@ -15,5 +15,5 @@ app.use('/rima/auth', authRoute);
 
 
 app.listen(PORT,()=>{
-    console.log(`Server is up and running on port: ${PORT}`)
+    console.log(`Server is up and running on port:  ${PORT}`)
 })
