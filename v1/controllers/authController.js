@@ -37,6 +37,16 @@ exports.login = async (req, res, next) => {
   }
 };
 
+
+function generateOTP() {
+  const digits = '0123456789';
+  let OTP = '';
+  for (let i = 0; i < 4; i++) {
+    OTP += digits[Math.floor(Math.random() * 10)];
+  }
+  return OTP;
+}
+
 exports.signup = async (req, res, next) => {
   try {
     // Check if the email address is already registered
@@ -47,6 +57,20 @@ exports.signup = async (req, res, next) => {
         .status(409)
         .json({ message: "Email address already registered" });
     }
+
+    // Generate a 4 digit OTP and send it to the phone number
+    const OTP = generateOTP();
+    const phoneNumber = req.body.phoneNumber;   
+
+     // code to send the OTP to the phone number using Twilio
+     client.messages
+       .create({
+         body: `Your OTP for sign up is ${OTP}`,
+         from: 'YOUR_TWILIO_PHONE_NUMBER',
+         to: phoneNumber
+       })
+       .then(message => console.log(message.sid))
+       .catch(err => console.log(err));
 
     // Create a new user object
     const user = new User({
@@ -67,31 +91,35 @@ exports.signup = async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(user.password, salt);
     user.password = hashedPassword;
 
-    // Save the user to the database
-    await user.save();
+     // Save the user to the database only after OTP verification is successful
+     const userOTP = req.body.OTP;
+     if (userOTP !== OTP) {
+       return res.status(400).json({ message: "Invalid OTP" });
+     }
+     await user.save();
 
-    if (user.role === "driver") {
-      const vehicleData = {
-        user: user._id,
-        vehicleNumber: req.body.vehicleNumber,
-        vehichleColor: req.body.vehichleColor,
-        vehicleMake: req.body.vehicleMake,
-        vehicleModel: req.body.vehicleModel,
-        insured: req.body.insured,
-        insuranceExpiryDate: req.body.insuranceExpiryDate,
-        qrType: req.body.qrType,
-      };
-      const driverInfoData = {
-        user: user_id,
-        profilePic: req.body.profilePic,
-        country: req.body.country,
-        district: req.body.district,
-        emergencyContact: req.body.emergencyContact,
-        driverUnion: req.body.driverUnion,
-      };
-      const vehicle = await VehicleInfo.create(vehicleData);
-      const driverInfo = await DriverInfo.create(driverInfoData);
-    }
+    // if (user.role === "driver") {
+    //   const vehicleData = {
+    //     user: user._id,
+    //     vehicleNumber: req.body.vehicleNumber,
+    //     vehichleColor: req.body.vehichleColor,
+    //     vehicleMake: req.body.vehicleMake,
+    //     vehicleModel: req.body.vehicleModel,
+    //     insured: req.body.insured,
+    //     insuranceExpiryDate: req.body.insuranceExpiryDate,
+    //     qrType: req.body.qrType,
+    //   };
+    //   const driverInfoData = {
+    //     user: user._id,
+    //     profilePic: req.body.profilePic,
+    //     country: req.body.country,
+    //     district: req.body.district,
+    //     emergencyContact: req.body.emergencyContact,
+    //     driverUnion: req.body.driverUnion,
+    //   };
+    //   const vehicle = await VehicleInfo.create(vehicleData);
+    //   const driverInfo = await DriverInfo.create(driverInfoData);
+    // }
 
     // Create a JWT token with the user ID and role as payload
     const payload = {
@@ -110,3 +138,39 @@ exports.signup = async (req, res, next) => {
   }
 
 }
+
+// POST /driver-info
+exports.saveDriverInfo = async (req, res, next) => {
+  try {
+    // Get the user ID from the authentication token
+    const userId = req.user.userId;
+
+    const vehicleData = {
+      user: userId,
+      vehicleNumber: req.body.vehicleNumber,
+      vehichleColor: req.body.vehichleColor,
+      vehicleMake: req.body.vehicleMake,
+      vehicleModel: req.body.vehicleModel,
+      insured: req.body.insured,
+      insuranceExpiryDate: req.body.insuranceExpiryDate,
+      qrType: req.body.qrType,
+    };
+
+    const driverInfoData = {
+      user: userId,
+      profilePic: req.body.profilePic,
+      country: req.body.country,
+      district: req.body.district,
+      emergencyContact: req.body.emergencyContact,
+      driverUnion: req.body.driverUnion,
+    };
+
+    const vehicle = await VehicleInfo.create(vehicleData);
+    const driverInfo = await DriverInfo.create(driverInfoData);
+
+    res.json({ message: "Driver and vehicle info saved successfully" });
+  } catch (err) {
+    next(err);
+  }
+}
+
